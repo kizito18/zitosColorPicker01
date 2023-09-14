@@ -8,6 +8,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,6 +30,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -86,7 +89,7 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
 
 
 
-    var isStarting  by remember { mutableStateOf(true) }
+    var isImageShown  by remember { mutableStateOf(true) }
 
 
     // var selectedSingleImageUri by remember { mutableStateOf(homeViewModel.selectedSingleImageUri) }
@@ -101,14 +104,16 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
 
     val imageSize = remember { mutableStateOf(Size.Zero) }
 
-    var imageOffsetLimitX  = 0f
-    var imageOffsetLimitY = 0f
+    var imageOffsetLimitX  by remember { mutableFloatStateOf(0f) }
+    var imageOffsetLimitY by remember { mutableFloatStateOf(0f) }
 
-    val radiusInPixels = 100.0f // Your radius value in pixels
+    var radiusInPixels by remember { mutableFloatStateOf(50.0f)}  // Your radius value in pixels
+
     val radiusInDp = convertPixelsToDp(radiusInPixels)
+    //val radiusInDp by remember { mutableFloatStateOf(convertPixelsToDp(radiusInPixels)) }
 
 
-    val ffp = 2.000
+
 
 
 
@@ -126,7 +131,7 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
                 selectedSingleImageUri = uri
 
 
-                isStarting = false
+                isImageShown = false
 
 
 
@@ -236,7 +241,10 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
         .fillMaxHeight()
         .fillMaxWidth()){
 
-        Box(modifier = Modifier.fillMaxSize().fillMaxWidth().fillMaxHeight(), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .fillMaxWidth()
+            .fillMaxHeight(), contentAlignment = Alignment.Center) {
 
 
             Column(
@@ -289,13 +297,114 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
 
                         Icon(
                             painter = painterResource(id = R.drawable.icon_photo),
-                            contentDescription = "hh",
+                            contentDescription = "pick image icon ",
                             tint = Color.LightGray,
                             modifier = Modifier.size(35.dp)
                         )
 
 
                     }
+
+
+
+
+
+
+                    var openColorExpandLayout  by remember { mutableStateOf(false) }
+
+
+                    IconButton(onClick = {
+
+                        if (!isImageShown) {
+
+                            openColorExpandLayout = true
+
+                        }else{
+
+                            Toast.makeText(context, "choose an image first", Toast.LENGTH_SHORT).show()
+
+                        }
+
+
+                    }) {
+
+
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_colorize_24),
+                            contentDescription = "show openColorExpandLayout ",
+                            tint = Color.LightGray,
+                            modifier = Modifier.size(35.dp)
+                        )
+
+
+                    }
+
+
+
+
+
+
+
+                    //openColarExpandLayout
+                    when (openColorExpandLayout){
+
+                        true -> {
+
+
+                            IconButton(onClick = {
+
+                                radiusInPixels += 4.0f
+
+
+                            }) {
+
+
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_plus_one_24),
+                                    contentDescription = "increase color picker size",
+                                    tint = Color.LightGray,
+                                    modifier = Modifier.size(35.dp)
+                                )
+
+
+                            }
+
+
+
+
+
+                            IconButton(onClick = {
+
+
+                                radiusInPixels -= 4.0f
+
+
+                            }) {
+
+
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_horizontal_rule_24),
+                                    contentDescription = "reduce   color picker size",
+                                    tint = Color.LightGray,
+                                    modifier = Modifier.size(35.dp)
+                                )
+
+
+                            }
+
+                        }
+
+
+                        else -> {}
+                    }
+
+
+
+
+
+
+
+
 
 
                 }
@@ -465,7 +574,7 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
 
 
 
-                        if (!isStarting) {
+                        if (!isImageShown) {
 
 
 
@@ -566,8 +675,8 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
                                             imageOffset =
                                                 Offset(imageOffsetLimitX, imageOffsetLimitY)
 
-                                            imageSize.value = Size(imageWidth.toFloat(), imageHeight.toFloat())
-
+                                            imageSize.value =
+                                                Size(imageWidth.toFloat(), imageHeight.toFloat())
 
 
                                             /*
@@ -596,18 +705,12 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
                                             onTouchEvent(
                                                 TouchEvent
                                                     (
-                                                    (imageWidth*scale)/2 ,
-                                                    (imageHeight*scale)/2,
-                                                     100f
+                                                    (imageWidth * scale) / 2,//this will center it
+                                                    (imageHeight * scale) / 2,//this will center it
+                                                    radiusInPixels // radius
                                                 )
 
                                             )
-
-
-
-
-
-
 
 
                                         }
@@ -625,13 +728,43 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
 
 
 
+
+                    // Pointer Listener BOX
+                    Box(
+                        modifier = Modifier
+
+                            // Pointer Listener BOX
+
+                            //  .height(imageSize.value.height.dp / 10.0.toFloat())
+                            // .width(imageSize.value.width.dp / 10.0.toFloat())
+                            .size(radiusInDp.dp)
+                            .clip(CircleShape)
+                            .border(BorderStroke(2.dp, Color.Cyan), shape = CircleShape)
+                            .align(Alignment.Center)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Gray
+                                    ), //startY = 0.5f
+                                )
+                            ),
+
+
+
+                        )
+
+
+
+                    /*
+
                     Box(
                         modifier = Modifier
 
 
                             // THIS WILL MAKE THE BOX SAME WITH THE IMAGE
-                            .height(imageSize.value.height.dp/2)
-                            .width(imageSize.value.width.dp/2)
+                            .height(imageSize.value.height.dp / 2)
+                            .width(imageSize.value.width.dp / 2)
                             //.size(radiusInDp.dp)
                             .clip(CircleShape)
                             .border(BorderStroke(2.dp, Color.Cyan), shape = CircleShape)
@@ -647,7 +780,8 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
                         contentAlignment = Alignment.Center
 
 
-                    ){
+                    )
+                    {
 
 
 
@@ -656,9 +790,9 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
 
                                 // Pointer Listener BOX
 
-                                .height(imageSize.value.height.dp/10.0.toFloat())
-                                .width(imageSize.value.width.dp/10.0.toFloat())
-                                //.size(radiusInDp.dp)
+                              //  .height(imageSize.value.height.dp / 10.0.toFloat())
+                               // .width(imageSize.value.width.dp / 10.0.toFloat())
+                                .size(radiusInDp.dp)
                                 .clip(CircleShape)
                                 .border(BorderStroke(2.dp, Color.Cyan), shape = CircleShape)
                                 .align(Alignment.Center)
@@ -680,7 +814,17 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
                     }
 
 
+
+                    */
+
+
+
+
+
                 }
+
+
+
 
 
                 // Ads layout
@@ -750,19 +894,6 @@ fun HomeScreen(windowSize: WindowSize, navigationController : NavController
 
 
 
-private fun convertToSRGB(color: Int): Int {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Color(
-            alpha = android.graphics.Color.alpha(color) / 255f,
-            red = android.graphics.Color.red(color) / 255f,
-            green = android.graphics.Color.green(color) / 255f,
-            blue = android.graphics.Color.blue(color) / 255f,
-            colorSpace = ColorSpaces.Srgb
-        ).toArgb()
-    } else {
-        color
-    }
-}
 
 
 
@@ -790,6 +921,28 @@ fun convertPixelsToDp(pixels: Float): Float {
     val densityDpi = Resources.getSystem().displayMetrics.densityDpi.toFloat()
     return pixels / (densityDpi / 160f) // 160 is the baseline density (mdpi)
 }
+
+
+
+
+
+
+
+private fun convertToSRGB(color: Int): Int {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Color(
+            alpha = android.graphics.Color.alpha(color) / 255f,
+            red = android.graphics.Color.red(color) / 255f,
+            green = android.graphics.Color.green(color) / 255f,
+            blue = android.graphics.Color.blue(color) / 255f,
+            colorSpace = ColorSpaces.Srgb
+        ).toArgb()
+    } else {
+        color
+    }
+}
+
+
 
 
 // Function to mix a list of colors and return the average color
